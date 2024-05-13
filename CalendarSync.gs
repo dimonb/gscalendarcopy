@@ -47,7 +47,8 @@ function syncEventsLocked(calendarId, fullSync) {
   var options = {
     maxResults: 100
   };
-  var syncToken = properties.getProperty('syncToken');
+  var syncTokenKey = 'syncToken.' + calendarId; 
+  var syncToken = properties.getProperty(syncTokenKey);
   if (syncToken && !fullSync) {
     options.syncToken = syncToken;
   } else {
@@ -55,6 +56,7 @@ function syncEventsLocked(calendarId, fullSync) {
     options.timeMin = getRelativeDate(-30, 0).toISOString();
   }
 
+  console.log('syncTokenKey: %s', syncTokenKey)
   console.log('syncToken: %s', syncToken);
 
   // Retrieve events one page at a time.
@@ -68,7 +70,7 @@ function syncEventsLocked(calendarId, fullSync) {
       // Check to see if the sync token was invalidated by the server;
       // if so, perform a full sync instead.
       if (e.message.includes('a full sync is required')) {
-        properties.deleteProperty('syncToken');
+        properties.deleteProperty(syncTokenKey);
         console.log('remove syncToken');
         syncEventsLocked(calendarId, true);
         return;
@@ -120,7 +122,8 @@ function syncEventsLocked(calendarId, fullSync) {
     pageToken = events.nextPageToken;
   } while (pageToken);
 
-  properties.setProperty('syncToken', events.nextSyncToken);
+  properties.setProperty(syncTokenKey, events.nextSyncToken);
+  console.log('save syncToken');
 }
 
 /**
